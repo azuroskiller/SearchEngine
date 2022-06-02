@@ -10,9 +10,6 @@ mongoose.connection
 
 const JobsSchema = new mongoose.Schema({
 
-    "jobID": {
-        type: String
-    },
     "jobName": {
         type: String,
         required: true

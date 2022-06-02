@@ -11,7 +11,7 @@ mongoose.connection
 const UserSchema = new mongoose.Schema({
 
     "userID": {
-        type: String
+        type: Number
     },
     "email": {
         type: String,
