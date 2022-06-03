@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 mongoose.connect("mongodb+srv://hairul:hairul123@crawler1.u1w6t.mongodb.net/?retryWrites=true&w=majority", { useNewUrlParser: true });
 
 mongoose.connection
-    .once('open', () => console.log('Connected'))
     .on("error", error => {
         console.log("Your Error", error);
     });

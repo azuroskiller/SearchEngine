@@ -6,7 +6,9 @@ const path = require('path')
 const app = express()
 
 const mongoose = require('mongoose')
-const JobsSchema = require('./models/Jobs')
+const JobsSchema = require('./models/Jobs');
+const { exit } = require('process');
+
 mongoose.connect("mongodb+srv://hairul:hairul123@crawler1.u1w6t.mongodb.net/?retryWrites=true&w=majority", { useMongoClient: true }, (err) => {
     if (err) throw err;
     console.log("Connected to Database");
@@ -34,7 +36,7 @@ async function start() {
     var website = ["Website"];
     var about = ["About"];
 
-    for (var j = 1; j < 6; j++) {
+    for (var j = 1; j < 2; j++) {
 
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(0);
@@ -46,15 +48,15 @@ async function start() {
 
         console.log('browsing page ' + j);
 
-        for (var i = 1; i < 31; i++) {
+        for (var i = 1; i < 11; i++) {
 
-            await page.waitForXPath("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a")
-            var b = await page.$x("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a")
+            await page.waitForXPath("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a");
+            var b = await page.$x("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a");
             await b[0].click();
 
             const elementsToFind = [
                 { xpath: "/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a", propName: 'job_name' },
-                { xpath: '//*[@id="suj-single-jobdetail-wrapper"]/div[1]/div[2]/div/h6[2]/a', propName: 'country' },
+                { xpath: "/html/body/div[1]/div[3]/div[2]/div[1]/div[2]/div/h6[2]/a", propName: 'country' },
                 { xpath: "/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/p[1]/a", propName: 'company' },
                 { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[2]/div[1]/div[3]/p', propName: 'job_type' },
                 { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[2]/div[1]/div[1]/p', propName: 'salary' },
@@ -63,12 +65,13 @@ async function start() {
                 { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[2]/div[2]/div[3]/div', propName: 'job_requirement' },
                 { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]/div', propName: 'job_responsibility' },
                 { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[2]/div[1]/div[2]/p', propName: 'industry' },
-                // ...
             ];
 
             var results = {};
 
             for (var { xpath, propName } of elementsToFind) {
+                
+                //await page.waitForSelector(xpath);
                 await page.waitForXPath(xpath);
                 var [el] = await page.$x(xpath);
                 results[propName] = !el ? 'Not Found' : await (await el.getProperty('textContent')).jsonValue();
@@ -112,23 +115,21 @@ async function start() {
         }
         await page.close();
     }
-
     await browser.close();
-
-    /*
     var k = 1;
-    name.forEach(function (a, index) {
+    skills.forEach(function (a, index) {
         console.log(k, a);
         k++;
-    });*/
+    });
+
     const saveData = async () => {
 
         var count = 0;
-        for (var t = 1; t < 151; t++) {
+        for (var t = 1; t < 31; t++) {
 
-            var searching = await JobsSchema.findOne({ 
-                jobName: name[t], 
-                company: company[t] 
+            var searching = await JobsSchema.findOne({
+                jobName: name[t],
+                company: company[t]
             });
 
             if (!searching) {
@@ -151,29 +152,21 @@ async function start() {
 
                 await newJobs.save();
             }
+            else {
+                console.log("No new data found");
+            }
         }
 
         console.log(count + " new data found.");
+        console.log("All Data Recorded");
     };
 
     saveData();
 
-    console.log("All Data Recorded");
-    /*
-    app.post('/api/create', async (req, res) => {
-        const record = req.body
-        console.log(record)
+    //mongoose.connection.close();
 
-        // * CREATE (_C_RUD)
-        const response = await JobsSchema.create(record)
 
-        console.log(response)
-
-        res.json({ status: 'ok' })
-    })*/
-
-    mongoose.connection.close();
-
+    exit();
 }
 
 start()
