@@ -7,7 +7,6 @@ const app = express()
 
 const mongoose = require('mongoose')
 const JobsSchema = require('./models/Jobs');
-const { exit } = require('process');
 
 mongoose.connect("mongodb+srv://hairul:hairul123@crawler1.u1w6t.mongodb.net/?retryWrites=true&w=majority", { useMongoClient: true }, (err) => {
     if (err) throw err;
@@ -36,7 +35,7 @@ async function start() {
     var website = ["Website"];
     var about = ["About"];
 
-    for (var j = 1; j < 2; j++) {
+    for (var j = 1; j < 6; j++) {
 
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(0);
@@ -48,11 +47,18 @@ async function start() {
 
         console.log('browsing page ' + j);
 
-        for (var i = 1; i < 11; i++) {
+        for (var i = 1; i < 31; i++) {
+
+            if((j == 1) && (i == 3))
+            {
+                continue;
+            }
 
             await page.waitForXPath("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a");
             var b = await page.$x("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a");
             await b[0].click();
+
+            await delay(4000);
 
             const elementsToFind = [
                 { xpath: "/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a", propName: 'job_name' },
@@ -70,16 +76,15 @@ async function start() {
             var results = {};
 
             for (var { xpath, propName } of elementsToFind) {
-                
-                //await page.waitForSelector(xpath);
-                await page.waitForXPath(xpath);
+
                 var [el] = await page.$x(xpath);
                 results[propName] = !el ? 'Not Found' : await (await el.getProperty('textContent')).jsonValue();
                 results[propName] = results[propName].replace(/\s+/g, ' ')
                 results[propName] = results[propName].replaceAll('|', ',')
-                results[propName] = results[propName].replaceAll('JOB DESCRIPTION ', '')
-                results[propName] = results[propName].replaceAll('JOB REQUIREMENT ', '')
-                results[propName] = results[propName].replaceAll('JOB RESPONSIBILITY ', '')
+                results[propName] = results[propName].replaceAll('JOB DESCRIPTION', '')
+                results[propName] = results[propName].replaceAll('JOB REQUIREMENT', '')
+                results[propName] = results[propName].replaceAll('JOB RESPONSIBILITY', '')
+
             }
 
             name.push(results['job_name']);
@@ -92,40 +97,23 @@ async function start() {
             req.push(results['job_requirement']);
             resp.push(results['job_responsibility']);
             industry.push(results['industry']);
-/*
-            const elementsToFind2 = [
-                { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[3]/div[1]/div[1]/p/a', propName2: 'website' },
-                { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[3]/div[2]/div[1]/div', propName2: 'about' },
-                // ...
-            ];
 
-            await page.evaluate(() => document.querySelector("#suj-single-jobdetail-wrapper > div.detail-body > div.row > div.col.s12.tabs-wrapper.suj-company-review-tabs-wrapper > ul > li:nth-child(2) > a").click())
-
-            for (var { xpath, propName2 } of elementsToFind2) {
-                await page.waitForXPath(xpath);
-                var [el] = await page.$x(xpath);
-                results[propName2] = !el ? 'Not Found' : await (await el.getProperty('textContent')).jsonValue();
-                results[propName2] = results[propName2].replace(/\s+/g, ' ')
-                results[propName2] = results[propName2].replaceAll('|', ',')
-            }
-
-            website.push(results['website']);
-            about.push(results['industry']);
-*/          console.log(i);
+            console.log(i);
         }
-        await page.close();
+
     }
-    await browser.close();
-    var k = 1;
-    skills.forEach(function (a, index) {
-        console.log(k, a);
-        k++;
-    });
+    
+    function delay(time) {
+        return new Promise(function(resolve) { 
+            setTimeout(resolve, time)
+        });
+     }
 
     const saveData = async () => {
 
         var count = 0;
-        for (var t = 1; t < 31; t++) {
+
+        for (var t = 1; t < 150; t++) {
 
             var searching = await JobsSchema.findOne({
                 jobName: name[t],
@@ -149,24 +137,23 @@ async function start() {
                     "industry": industry[t],
 
                 });
-
                 await newJobs.save();
             }
-            else {
-                console.log("No new data found");
-            }
         }
-
-        console.log(count + " new data found.");
-        console.log("All Data Recorded");
+        if(count == 0 )
+        {
+            console.log("No new data found");
+        }
+        else{
+            console.log(count + " new data found.");
+            console.log("All Data Recorded");
+        }
     };
 
     saveData();
 
     //mongoose.connection.close();
 
-
-    exit();
 }
 
 start()

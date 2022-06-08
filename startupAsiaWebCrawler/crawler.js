@@ -71,3 +71,22 @@
 // }
 
 // start()
+
+// const elementsToFind2 = [
+//     { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[3]/div[1]/div[1]/p/a', propName2: 'website' },
+//     { xpath: '/html/body/div[1]/div[3]/div[2]/div[2]/div[1]/div[3]/div[2]/div[1]/div', propName2: 'about' },
+//     // ...
+// ];
+
+// await page.evaluate(() => document.querySelector("#suj-single-jobdetail-wrapper > div.detail-body > div.row > div.col.s12.tabs-wrapper.suj-company-review-tabs-wrapper > ul > li:nth-child(2) > a").click())
+
+// for (var { xpath, propName2 } of elementsToFind2) {
+//     await page.waitForXPath(xpath);
+//     var [el] = await page.$x(xpath);
+//     results[propName2] = !el ? 'Not Found' : await (await el.getProperty('textContent')).jsonValue();
+//     results[propName2] = results[propName2].replace(/\s+/g, ' ')
+//     results[propName2] = results[propName2].replaceAll('|', ',')
+// }
+
+// website.push(results['website']);
+// about.push(results['industry']);
