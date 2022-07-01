@@ -49,7 +49,7 @@ async function start() {
 
         for (var i = 1; i < 31; i++) {
 
-            if((j == 1) && (i == 3))
+            if((j == 1) && (i == 12))
             {
                 continue;
             }
