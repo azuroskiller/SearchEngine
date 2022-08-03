@@ -8,6 +8,7 @@ const app = express()
 const mongoose = require('mongoose')
 const JobsSchema = require('./models/Jobs');
 
+//Connecting to database
 mongoose.connect("mongodb+srv://hairul:hairul123@crawler1.u1w6t.mongodb.net/?retryWrites=true&w=majority", { useMongoClient: true }, (err) => {
     if (err) throw err;
     console.log("Connected to Database");
@@ -16,6 +17,7 @@ mongoose.connect("mongodb+srv://hairul:hairul123@crawler1.u1w6t.mongodb.net/?ret
 
 async function start() {
 
+//Opening a browser 
     const browser = await puppeteer.launch({
         headless: true,
         defaultViewport: null,
@@ -35,11 +37,13 @@ async function start() {
     var website = ["Website"];
     var about = ["About"];
 
+//Crawl through 5 pages, the last page contain less than 30 jobs, so it is skipped
     for (var j = 1; j < 6; j++) {
 
         const page = await browser.newPage();
         page.setDefaultNavigationTimeout(0);
 
+        //Opening the website, timeout is set to 5 min because the website is heavy
         await page.goto('https://startupjobs.asia/job/search?q=&job-list-dpl-page=' + j, {
             waitUntil: "networkidle2",
             timeout: 3000000
@@ -47,8 +51,10 @@ async function start() {
 
         console.log('browsing page ' + j);
 
+        //Scraping for the 30 jobs information in the website
         for (var i = 1; i < 31; i++) {
 
+            //This code is use to skip a job if it has a different style than the others for example: *New or *Hot
             if((j == 1) && (i == 12))
             {
                 continue;
@@ -58,7 +64,8 @@ async function start() {
             var b = await page.$x("/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a");
             await b[0].click();
 
-            await delay(4000);
+            //Give the website a couple of minutes to load the contents to avoid scraping the same information as the job before
+            await delay(5000);
 
             const elementsToFind = [
                 { xpath: "/html/body/div[1]/div[3]/div[1]/div/div[1]/ul/li[" + i + "]/div/div[1]/div/h5/a", propName: 'job_name' },
@@ -75,6 +82,7 @@ async function start() {
 
             var results = {};
 
+            //Removing not required content
             for (var { xpath, propName } of elementsToFind) {
 
                 var [el] = await page.$x(xpath);
@@ -87,6 +95,7 @@ async function start() {
 
             }
 
+            //Inserting the job into the array
             name.push(results['job_name']);
             country.push(results['country']);
             company.push(results['company']);
@@ -109,12 +118,14 @@ async function start() {
         });
      }
 
+    //Saving the job into the databse
     const saveData = async () => {
 
         var count = 0;
 
         for (var t = 1; t < 150; t++) {
 
+            //Check if job already exist
             var searching = await JobsSchema.findOne({
                 jobName: name[t],
                 company: company[t]
@@ -158,7 +169,7 @@ async function start() {
 
 start()
 
-//schedule the crawler to run every 3rd day of the week at 9.05 a.m
+//Schedule the crawler to run every 3rd day of the week at 9.05 a.m
 //const crawling = schedule.scheduleJob('5 9 * * */3', () =>{
 //    start()
 //})
